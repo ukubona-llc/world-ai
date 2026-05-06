@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World AI · Ukubona Evidence Layer</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="dark"] {
+    --bg: #0a0d12;
+    --bg2: #111520;
+    --bg3: #1a2030;
+    --border: rgba(255,255,255,0.07);
+    --border-accent: rgba(100,180,255,0.25);
+    --text: #d8dde8;
+    --text-dim: #6a7589;
+    --text-bright: #f0f4ff;
+    --accent: #4a9eff;
+    --accent2: #7ecfff;
+    --accent-glow: rgba(74,158,255,0.15);
+    --phase-color: #4a9eff;
+    --tag-bg: rgba(74,158,255,0.08);
+    --tag-border: rgba(74,158,255,0.2);
+    --toggle-bg: #1a2030;
+    --card-shadow: 0 4px 40px rgba(0,0,0,0.5);
+  }
+  :root[data-theme="light"] {
+    --bg: #f5f2ec;
+    --bg2: #ede9e0;
+    --bg3: #e4dfd3;
+    --border: rgba(0,0,0,0.08);
+    --border-accent: rgba(20,80,160,0.2);
+    --text: #2a2d35;
+    --text-dim: #8a8f9a;
+    --text-bright: #0a0d12;
+    --accent: #1a5fc8;
+    --accent2: #2a7fd8;
+    --accent-glow: rgba(26,95,200,0.08);
+    --phase-color: #1a5fc8;
+    --tag-bg: rgba(26,95,200,0.06);
+    --tag-border: rgba(26,95,200,0.18);
+    --toggle-bg: #ddd8cc;
+    --card-shadow: 0 4px 40px rgba(0,0,0,0.08);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Crimson Pro', Georgia, serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.4s, color 0.4s;
+    overflow-x: hidden;
+  }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 3rem 2rem 6rem;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 3.5rem;
+    gap: 1rem;
+  }
+
+  .breadcrumb {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.6rem;
+  }
+
+  .breadcrumb span { color: var(--accent); }
+
+  .layer-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--tag-bg);
+    border: 1px solid var(--tag-border);
+    border-radius: 2px;
+    padding: 0.25rem 0.65rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+  }
+
+  .layer-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    font-weight: 700;
+    color: var(--text-bright);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent2);
+  }
+
+  .toggle {
+    flex-shrink: 0;
+    background: var(--toggle-bg);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    width: 44px;
+    height: 24px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.3s;
+    margin-top: 0.5rem;
+  }
+
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    transition: transform 0.3s;
+  }
+
+  [data-theme="light"] .toggle::after { transform: translateX(20px); }
+
+  /* Phase strip */
+  .phase-strip {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .phase-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .phase-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--phase-color);
+    background: var(--tag-bg);
+    border: 1px solid var(--tag-border);
+    padding: 0.2rem 0.5rem;
+    border-radius: 2px;
+  }
+
+  .algebra {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-left: auto;
+    letter-spacing: 0.05em;
+  }
+
+  /* Lead */
+  .lead {
+    font-size: 1.25rem;
+    line-height: 1.7;
+    color: var(--text);
+    font-weight: 300;
+    margin-bottom: 2.5rem;
+    font-style: italic;
+  }
+
+  /* Sections */
+  .section {
+    margin-bottom: 2.5rem;
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid var(--border);
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .section:last-child { border-bottom: none; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section:nth-child(1) { animation-delay: 0.1s; }
+  .section:nth-child(2) { animation-delay: 0.2s; }
+  .section:nth-child(3) { animation-delay: 0.3s; }
+  .section:nth-child(4) { animation-delay: 0.4s; }
+  .section:nth-child(5) { animation-delay: 0.5s; }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.7rem;
+  }
+
+  .section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 400;
+    color: var(--text-bright);
+    margin-bottom: 0.9rem;
+    line-height: 1.3;
+  }
+
+  .section p {
+    font-size: 1.05rem;
+    line-height: 1.75;
+    color: var(--text);
+    font-weight: 300;
+  }
+
+  .section p + p { margin-top: 0.8rem; }
+
+  /* Inline highlight */
+  .hl { color: var(--accent2); font-style: italic; }
+
+  /* Example box */
+  .example-box {
+    margin-top: 1.2rem;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.2rem;
+    border-radius: 0 4px 4px 0;
+  }
+
+  .example-box .ex-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+
+  .example-box p {
+    font-size: 0.95rem !important;
+    line-height: 1.65 !important;
+  }
+
+  /* Pill list */
+  .pill-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  .pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--border-accent);
+    border-radius: 100px;
+    color: var(--text-dim);
+    background: var(--tag-bg);
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .pill:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* Footer nav */
+  .foot-nav {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .next-link {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: gap 0.2s;
+  }
+
+  .next-link:hover { gap: 0.9rem; }
+  .next-link::after { content: '→'; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <div>
+      <div class="breadcrumb">Ukubona · WHO India Evidence Synthesis · <span>Layer I</span></div>
+      <div class="layer-badge">World AI · Phase I · Tensor</div>
+      <h1><em>World</em> AI</h1>
+    </div>
+    <button class="toggle" onclick="toggleTheme()" aria-label="Toggle theme"></button>
+  </div>
+
+  <div class="phase-strip">
+    <span class="phase-label">V4 Phase</span>
+    <span class="phase-tag">I · Tensor</span>
+    <span class="phase-tag">θ¹</span>
+    <span class="algebra">θ¹ → L₀+Σwᵢ·Lᵢ → f(σ²,λ,ε) → γ|ε_FGT|² → L(θᵗ⁺¹)</span>
+  </div>
+
+  <p class="lead">The silent substrate beneath everything — the vast, pre-trained understanding of basic science, clinical medicine, public health, and health economics that no team can build from scratch.</p>
+
+  <div class="section">
+    <div class="section-label">What it is</div>
+    <h2>General scientific understanding across all domains</h2>
+    <p>World AI refers to large foundation models that have absorbed the world's published knowledge: basic biomedical science, clinical trial design, epidemiology, health economics, pharmacology, and adjacent disciplines. These models do not specialise in your question — they understand the universe in which your question lives.</p>
+    <p>Think of it as the <span class="hl">ambient intelligence</span> already embedded in tools like GPT-4, Claude, Gemini, and PubMed's semantic search layer. It is the raw environment within which all higher AI layers operate.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Role in the pipeline</div>
+    <h2>The foundation that makes screening possible at all</h2>
+    <p>At Phase I (Tensor, θ¹), World AI performs <span class="hl">database search</span> — constructing Boolean query strings, identifying MeSH terms, translating concepts across languages, and suggesting search strategies for Medline, Embase, CINAHL, EconLit, and grey sources like WHO IRIS.</p>
+    <p>Without this layer, every database search would require a specialist. With it, a health economist can interrogate fifteen databases in the time it once took to design one search strategy.</p>
+    <div class="example-box">
+      <div class="ex-label">WHO India · Practical example</div>
+      <p>A team reviewing cost-effectiveness of community health workers in low-resource settings uses World AI to generate and validate the PICOS framework, produce equivalent search strings across MEDLINE and EconLit, and flag missing grey literature from WHO IRIS and NHSRC repositories — before a single abstract is read.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">What it does not do</div>
+    <h2>Breadth, not depth — scope, not precision</h2>
+    <p>World AI understands everything in general and nothing specifically. It cannot reliably distinguish a high-quality RCT from a poor one, it does not know your inclusion criteria, and it cannot extract a DALY estimate from a PDF without instruction. That is the work of the layers above.</p>
+    <p>The failure mode is <span class="hl">confident generality</span> — it will produce a plausible-sounding search string that misses domain-specific synonyms an expert would catch. Human validation of the search strategy remains essential.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Domains covered</div>
+    <h2>The scope of embedded knowledge</h2>
+    <div class="pill-list">
+      <span class="pill">Basic science</span>
+      <span class="pill">Clinical medicine</span>
+      <span class="pill">Epidemiology</span>
+      <span class="pill">Health economics</span>
+      <span class="pill">Pharmacology</span>
+      <span class="pill">Public health systems</span>
+      <span class="pill">Global health policy</span>
+      <span class="pill">Health financing</span>
+      <span class="pill">UHC frameworks</span>
+      <span class="pill">DALY / QALY methods</span>
+      <span class="pill">Boolean logic</span>
+      <span class="pill">MeSH taxonomy</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Procurement note</div>
+    <h2>Already in the room — the question is stewardship</h2>
+    <p>World AI is not procured — it is already embedded in tools your team uses daily. The institutional question is not <em>whether</em> to use it but <em>how to govern</em> its use: which models, under which data-sharing agreements, with which validation protocols. For WHO India teams handling sensitive national data, this governance question precedes all others.</p>
+  </div>
+
+  <div class="foot-nav">
+    <a class="next-link" href="perception-ai.html">Perception AI</a>
+  </div>
+</div>
+
+<script>
+  function toggleTheme() {
+    const root = document.documentElement;
+    root.setAttribute('data-theme', root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  }
+</script>
+</body>
+</html>
